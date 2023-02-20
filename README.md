@@ -1,10 +1,10 @@
 
 ## 💡프로젝트 소개
-
-#### 1️⃣ 주제 : 텍스트 추출 요약<br>
-#### 2️⃣ 설명 : [Fine-tune BERT for Extractive Summarization](https://arxiv.org/pdf/1903.10318v2.pdf)을 기반으로 추출 요약 모델 구현<br> 
-#### 3️⃣ 모델 : Hugging Face [klue/bert-base](https://huggingface.co/klue/bert-base) 모델 사용하여 진행<br><br>
-
+```
+1️⃣ 주제 : 텍스트 추출 요약
+2️⃣ 설명 : [Fine-tune BERT for Extractive Summarization](https://arxiv.org/pdf/1903.10318v2.pdf)을 기반으로 추출 요약 모델 구현 
+3️⃣ 모델 : Hugging Face [klue/bert-base](https://huggingface.co/klue/bert-base) 모델 사용하여 진행
+```
 ## 논문 소개
 - pre-training 모델을 post-training를 통해서 도메인 적응을 하고 fine-tuning를 진행해 성능 향상을 기대한다.
 - fine-grained : 소량의 후보에서 최적의 후보를 선택하는 방법으로 주로 One-tower 구조의 모델을 구현하여 성능을 향상시킨다.
