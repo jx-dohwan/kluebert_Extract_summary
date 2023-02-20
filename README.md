@@ -6,16 +6,27 @@
 3️⃣ 모델 : Hugging Face [klue/bert-base](https://huggingface.co/klue/bert-base) 모델 사용하여 진행
 ```
 ## 논문 소개
-- pre-training 모델을 post-training를 통해서 도메인 적응을 하고 fine-tuning를 진행해 성능 향상을 기대한다.
-- fine-grained : 소량의 후보에서 최적의 후보를 선택하는 방법으로 주로 One-tower 구조의 모델을 구현하여 성능을 향상시킨다.
-![](img/mrs.png)
-<Br><br>
+- BERT를 기반으로 Simple Classifier, Inter-sentence Transformer, Recurrent Neural Network 세가지 종류의 summarization-specific layers를 추가하여 추출 요약 실험 진행
+<br>
+
+![](img/bertsum.png)
+<Br>
 ### 부연설명
-- post-training
-  - 전체 대화를 여러 개의 short context-response pairs로 나누어 모델을 학습
-    - candidate을 positive, random negative, context negative로 3개 class로 구성해서 학습
-    - 이를 통해 발화 관련 분류(URC)로 발화간의 관계 및 발화 내적 관계를 배워 데이터 증강과 성능 향상의 효과를 얻는다. 
-  - MLM 사용
+- Embedding Multiple Sentences
+  - 문장의 시작 : [CLS], 문장의 끝 : [SEP] 을 삽입하여 기존 [SEP]만 사용하여 문장들을 구분하던 BERT모델을 개선했다.
+  - 여러개의 [CLS] 토큰을 사용하여 각 문장들의 feature를 [CLS] 토큰에 저장한다.
+- Interval segment Embedding
+  - 여러 문장이 포함된 문장에서 문서를 구분하기 위해서 사용됨
+  - 요약 문서의 특성 상 두개 이상의 문장이 포함되므로 기본의 방식과는 다르게 문장1~4를 A와 B를 번갈아가며 구분
+- Summarization Layers
+  - BERT로부터 문장 vector에 대한 정보를 얻은 다음에 추출 요약을 위하여 문서 단위의 feature를 잡기 위해 그 결괏값 위에 summarization-specific layers를 쌓는다. 
+  - Simple Classifier
+    - 기존 BERT와 같이 Linear layer 및 Sigmoid function
+  - Inter-sentence Transformer
+    - 문장 representations을 위하여 Transformer layer을 사용하며 마지막 단계에서는 Transformer layer로부터 나온 문장 vector를 sigmoid classifier 넣는다. 그리고 Layer가 2개일 때의 성능이 제일 좋았다.
+  - Recurrent Neural Network
+    - Transformer와 RNN결합시 성능이 좋았으며 BERT output을 LSTM layer로 넘겨준다. 마지막 단계에서는 sigmoid classifier를 사용한다.
+
 
 ---
 ## 1. post-training & fine-tuning
