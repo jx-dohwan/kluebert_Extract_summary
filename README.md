@@ -1,16 +1,15 @@
 
 ## 💡프로젝트 소개
-```
-1️⃣ 주제 : 텍스트 추출 요약
-2️⃣ 설명 : [Fine-tune BERT for Extractive Summarization](https://arxiv.org/pdf/1903.10318v2.pdf)을 기반으로 추출 요약 모델 구현 
-3️⃣ 모델 : Hugging Face [klue/bert-base](https://huggingface.co/klue/bert-base) 모델 사용하여 진행
-```
+
+#### 1️⃣ 주제 : 텍스트 추출 요약<br>
+#### 2️⃣ 설명 : [Fine-tune BERT for Extractive Summarization](https://arxiv.org/pdf/1903.10318v2.pdf)을 기반으로 추출 요약 모델 구현<br> 
+#### 3️⃣ 모델 : Hugging Face [klue/bert-base](https://huggingface.co/klue/bert-base) 모델 사용하여 진행<br><br>
+
 ## 논문 소개
 - BERT를 기반으로 Simple Classifier, Inter-sentence Transformer, Recurrent Neural Network 세가지 종류의 summarization-specific layers를 추가하여 추출 요약 실험 진행
 <br>
 
 ![](img/bertsum.png)
-<Br>
 ### 부연설명
 - Embedding Multiple Sentences
   - 문장의 시작 : [CLS], 문장의 끝 : [SEP] 을 삽입하여 기존 [SEP]만 사용하여 문장들을 구분하던 BERT모델을 개선했다.
@@ -29,65 +28,46 @@
 
 
 ---
-## 1. post-training & fine-tuning
+## 1. train
 
 ```
-!pip install transformers==4.25.1
+logdirlocation = 'LOG/KLUE'
+os.makedirs(logdirlocation, exist_ok=True)
 
-
-!python3 post_pretrain/train.py
-!python3 fine_tuning/train.py
+!python SRC/train.py \
+  -mode train \
+  -encoder transformer \
+  -dropout 0.1 \
+  -bert_data_path data/bert_data/train/korean \
+  -model_path MODEL/KLUE/bert_transformer \
+  -lr 2e-3 \
+  -visible_gpus 0 \
+  -gpu_ranks 0 \
+  -world_size 1 \
+  -report_every 1000\
+  -save_checkpoint_steps 100 \
+  -batch_size 1000 \
+  -decay_method noam \
+  -train_steps 1000 \
+  -accum_count 2 \
+  -log_file LOG/KLUE/bert_transformer.txt \
+  -use_interval true \
+  -warmup_steps 200 \
+  -ff_size 2048 \
+  -inter_layers 2 \
+  -heads 8
 ```
 
 ## 2. Test
 ```
-import torch
-from model import FineModel
-fine_model = FineModel().cuda()
-fine_model.load_state_dict(torch.load('/content/drive/MyDrive/인공지능/멀티턴응답선택/fine_model.bin'))
-
-
-context = ["어떤 문제가 있으신가요?", "어떤 차를 사야 할지 잘 모르겠어요.", "차는 한 번 사면 10년도 넘게 써서, 신중하게 골라야 해요."]
-candidates = ["저 좀 도와주실 수 있나요?", "저는 농구를 좋아합니다.", "자동차는 신중히 골라야합니다.", "저는 차 마시는거를 좋아합니다.", "날씨가 화창합니다.", "저는 차를 좋아합니다."]
-     
-
-context_token = [fine_model.tokenizer.cls_token_id]
-for utt in context:
-    context_token += fine_model.tokenizer.encode(utt, add_special_tokens=False)
-    context_token += [fine_model.tokenizer.sep_token_id]
-
-session_tokens = []    
-for response in candidates:
-    response_token = [fine_model.tokenizer.eos_token_id]
-    response_token += fine_model.tokenizer.encode(response, add_special_tokens=False)
-    candidate_tokens = context_token + response_token        
-    session_tokens.append(candidate_tokens)
-    
-# 최대 길이 찾기 for padding
-max_input_len = 0
-input_tokens_len = [len(x) for x in session_tokens]
-max_input_len = max(max_input_len, max(input_tokens_len))    
-    
-batch_input_tokens = []
-batch_input_attentions = []
-for session_token in session_tokens:
-    input_token = session_token + [fine_model.tokenizer.pad_token_id for _ in range(max_input_len-len(session_token))]
-    input_attention = [1 for _ in range(len(session_token))] + [0 for _ in range(max_input_len-len(session_token))]
-    batch_input_tokens.append(input_token)
-    batch_input_attentions.append(input_attention)
-    
-batch_input_tokens = torch.tensor(batch_input_tokens).cuda()
-batch_input_attentions = torch.tensor(batch_input_attentions).cuda()
-
-
-softmax = torch.nn.Softmax(dim=1)
-results = fine_model(batch_input_tokens, batch_input_attentions)
-prob = softmax(results)
-true_prob = prob[:,1].tolist()
-
-print(context)
-for utt, prob in zip(candidates, true_prob):
-    print(utt, '##', round(prob,3))
+!python SRC/train.py \
+  -mode inference \
+  -visible_gpus -1 \
+  -gpu_ranks -1 \
+  -world_size 0 \
+  -log_file LOG/KLUE/bert_transformer.txt \
+  -test_from MODEL/KLUE/bert_transformer/model_step_1000.pt \
+  -input_text raw_data/valid/valid_0.txt
 ```
 
 ---
