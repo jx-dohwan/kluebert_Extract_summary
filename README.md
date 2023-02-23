@@ -71,14 +71,7 @@ os.makedirs(logdirlocation, exist_ok=True)
 ```
 
 ---
-## 🗓️ 프로젝트 개선 진행
-
-|개선사항|이유|진행률(%)|
-|:-----:|:-----:|:-----:|
-|Data Augmentation|법률문서 낮은 score||
-|5만 step로 학습|테스트로 1000 학습||
-|Transformer로 서비스 구현|Transformer가 가장 성능이 좋음||
-|RoBERTa, ELECTRA등 고려|BERT보다 좋은 성능 모델 존재||
 
 
----
+
+
