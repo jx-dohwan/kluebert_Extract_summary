@@ -61,6 +61,7 @@ class Summarizer(nn.Module):
         self.args = args
         self.device = device
         self.bert = Bert(args.temp_dir, load_pretrained_bert, bert_config)
+        
         if (args.encoder == 'classifier'):
             self.encoder = Classifier(self.bert.model.config.hidden_size)
         elif(args.encoder=='transformer'):
@@ -80,6 +81,50 @@ class Summarizer(nn.Module):
             for p in self.encoder.parameters():
                 p.data.uniform_(-args.param_init, args.param_init)
         if args.param_init_glorot:
+            for p in self.encoder.parameters():
+                if p.dim() > 1:
+                    xavier_uniform_(p)
+
+        self.to(device)
+    def load_cp(self, pt):
+        self.load_state_dict(pt['model'], strict=True)
+
+    def forward(self, x, segs, clss, mask, mask_cls, sentence_range=None):
+
+        top_vec = self.bert(x, segs, mask)
+        sents_vec = top_vec[torch.arange(top_vec.size(0)).unsqueeze(1), clss]
+        sents_vec = sents_vec * mask_cls[:, :, None].float()
+        sent_scores = self.encoder(sents_vec, mask_cls).squeeze(-1)
+        return sent_scores, mask_cls
+
+class new_Summarizer(nn.Module):
+    # temp_dir, encoder, ff_size, heads, dropout, inter_layers, rnn_size, hidden_size,param_init, param_init_glorot
+    def __init__(self, temp_dir, encoder, ff_size, heads, dropout, inter_layers,
+                 rnn_size, hidden_size, param_init, param_init_glorot,
+                 device, load_pretrained_bert = False, bert_config = None):
+        super(new_Summarizer, self).__init__()
+        
+        self.device = device
+        self.bert = Bert(temp_dir, load_pretrained_bert, bert_config)
+        if (encoder == 'classifier'):
+            self.encoder = Classifier(self.bert.model.config.hidden_size)
+        elif(encoder=='transformer'):
+            self.encoder = TransformerInterEncoder(self.bert.model.config.hidden_size, ff_size, heads,
+                                                   dropout, inter_layers)
+        elif(encoder=='rnn'):
+            self.encoder = RNNEncoder(bidirectional=True, num_layers=1,
+                                      input_size=self.bert.model.config.hidden_size, hidden_size=rnn_size,
+                                      dropout=dropout)
+        elif (encoder == 'baseline'):
+            bert_config = BertConfig(self.bert.model.config.vocab_size, hidden_size=hidden_size,
+                                     num_hidden_layers=6, num_attention_heads=8, intermediate_size=ff_size)
+            self.bert.model = BertModel(bert_config)
+            self.encoder = Classifier(self.bert.model.config.hidden_size)
+
+        if param_init != 0.0:
+            for p in self.encoder.parameters():
+                p.data.uniform_(-param_init, param_init)
+        if param_init_glorot:
             for p in self.encoder.parameters():
                 if p.dim() > 1:
                     xavier_uniform_(p)
