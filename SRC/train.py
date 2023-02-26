@@ -19,8 +19,8 @@ import sys
 sys.path.append('SRC')
 from models import data_loader, model_builder
 from models.data_loader import load_dataset
-from models.model_builder import Summarizer
-from models.trainer import build_trainer
+from models.model_builder import Summarizer, new_Summarizer
+from models.trainer import build_trainer, new_build_trainer
 from others.logging import logger, init_logger
 from prepro.data_builder import txt2input, new_txt2input
 
@@ -185,7 +185,7 @@ def validate(args,  device_id, pt, step):
     model.load_cp(checkpoint)
     model.eval()
 
-    valid_iter =data_loader.Dataloader(args, load_dataset(args, 'valid', shuffle=False),
+    valid_iter = data_loader.Dataloader(args, load_dataset(args, 'valid', shuffle=False),
                                   args.batch_size, device,
                                   shuffle=False, is_test=False)
     trainer = build_trainer(args, device_id, model, None)
@@ -238,6 +238,7 @@ def _lazy_dataset_loader(pt_file):
         
 
 def inference(args, device_id, step):
+    print('args :', args)
     with open(args.input_text, 'r') as f:
         text = "\n".join(f.readlines())
         
@@ -260,12 +261,9 @@ def inference(args, device_id, step):
     logger.info('Loading checkpoint from %s' % test_from)
     checkpoint = torch.load(test_from, map_location=lambda storage, loc: storage)
     opt = vars(checkpoint['opt'])
-    print("원본 테스트 여기에는 안오나?")
-    print("원본 테스트2 : ", opt)
-    print("원본 테스트3 : ", args)
+
     for k in opt.keys():
         if (k in model_flags):
-            print("원본 테스트 : ",setattr(args, k, opt[k]) )
             setattr(args, k, opt[k])
 
     config = BertConfig.from_pretrained('klue/bert-base')
@@ -281,10 +279,23 @@ def inference(args, device_id, step):
     
     final = [list(filter(None, text.split('\n')))[i] for i in result[0][:3]]
     print(final)
-    print("test8","".join(final))
     return final
 
-def inference2(input_data, test_from): # 이 부분을 with로 파일을 받는게 아니라 리스트를 받아서 돌리면 되지 않을까? infer2만들어서
+def new_inference(input_data, test_from, encoder): # 이 부분을 with로 파일을 받는게 아니라 리스트를 받아서 돌리면 되지 않을까? infer2만들어서
+    temp_dir = test_from
+    encoder = encoder
+    ff_size = 512
+    heads = 4
+    dropout = 0.1 
+    inter_layers = 2
+    rnn_size = 512
+    hidden_size = 128
+    param_init = 0
+    param_init_glorot = True
+    
+    batch_size = 1000
+
+    use_interval = True
     print("여기오나?")
     print(input_data)
     print("여기오나?")
@@ -313,17 +324,18 @@ def inference2(input_data, test_from): # 이 부분을 with로 파일을 받는�
     #         setattr(args, k, opt[k])
 
     config = BertConfig.from_pretrained('klue/bert-base')
-    model = Summarizer(args, device, load_pretrained_bert=False, bert_config = config)
+    model = new_Summarizer(temp_dir, encoder, ff_size, heads, dropout, inter_layers,
+                 rnn_size, hidden_size, param_init, param_init_glorot, device, load_pretrained_bert=False, bert_config = config)
     model.load_cp(checkpoint)
     model.eval()
 
-    test_iter = data_loader.Dataloader(args, _lazy_dataset_loader(input_list),
-                                args.batch_size, device,
+    test_iter = data_loader.new_Dataloader(use_interval, _lazy_dataset_loader(input_list),
+                                batch_size, device,
                                 shuffle=False, is_test=True)
-    trainer = build_trainer(args, device_id, model, None)
-    result = trainer.summ(test_iter,step)
+    trainer = new_build_trainer(args, device_id, model, None)
+    result = trainer.new_summ(test_iter,step)
     
-    final = [list(filter(None, text.split('\n')))[i] for i in result[0][:3]]
+    final = [list(filter(None, input_data))[i] for i in result[0][:3]]
     print(final)
     return final
 
@@ -429,6 +441,7 @@ if __name__ == '__main__':
     os.environ["CUDA_VISIBLE_DEVICES"] = args.visible_gpus
     # 여기부터 공부해야한다. 일단 밥먹고 금철갔다과 와야할듯 2023.02.24
     init_logger(args.log_file)
+    print(init_logger(args.log_file))
     device = "cpu" if args.visible_gpus == '-1' else "cuda"
     device_id = 0 if device == "cuda" else -1
 
