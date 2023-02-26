@@ -236,3 +236,130 @@ class DataIterator(object):
 
                 yield batch
             return
+        
+
+class new_Dataloader(object):
+    def __init__(self, use_interval, datasets,  batch_size,
+                 device, shuffle, is_test):
+        self.use_interval = use_interval
+        self.datasets = datasets
+        self.batch_size = batch_size
+        self.device = device
+        self.shuffle = shuffle
+        self.is_test = is_test
+        self.cur_iter = self._next_dataset_iterator(datasets)
+
+        assert self.cur_iter is not None
+
+    def __iter__(self):
+        dataset_iter = (d for d in self.datasets)
+        while self.cur_iter is not None:
+            for batch in self.cur_iter:
+                yield batch
+            self.cur_iter = self._next_dataset_iterator(dataset_iter)
+
+
+    def _next_dataset_iterator(self, dataset_iter):
+        try:
+            # Drop the current dataset for decreasing memory
+            if hasattr(self, "cur_dataset"):
+                self.cur_dataset = None
+                gc.collect()
+                del self.cur_dataset
+                gc.collect()
+
+            self.cur_dataset = next(dataset_iter)
+        except StopIteration:
+            return None
+
+        return DataIterator(use_interval = self.use_interval,
+            dataset=self.cur_dataset,  batch_size=self.batch_size,
+            device=self.device, shuffle=self.shuffle, is_test=self.is_test)
+
+
+class new_DataIterator(object):
+    def __init__(self, use_interval, dataset,  batch_size,  device=None, is_test=False,
+                 shuffle=True):
+        self.batch_size, self.is_test, self.dataset = batch_size, is_test, dataset
+        self.iterations = 0
+        self.device = device
+        self.shuffle = shuffle
+        self.use_interval = use_interval
+
+        self.sort_key = lambda x: len(x[1])
+
+        self._iterations_this_epoch = 0
+
+    def data(self):
+        if self.shuffle:
+            random.shuffle(self.dataset)
+        xs = self.dataset
+        return xs
+
+
+    def preprocess(self, ex, is_test):
+        src = ex['src']
+        if('labels' in ex):
+            labels = ex['labels']
+        else:
+            labels = ex['src_sent_labels']
+
+        segs = ex['segs']
+        if(not self.use_interval):
+            segs=[0]*len(segs)
+        clss = ex['clss']
+        src_txt = ex['src_txt']
+        tgt_txt = ex['tgt_txt']
+
+        if(is_test):
+            return src,labels,segs, clss, src_txt, tgt_txt
+        else:
+            return src,labels,segs, clss
+
+    def batch_buffer(self, data, batch_size):
+        minibatch, size_so_far = [], 0
+        for ex in data:
+            if(len(ex['src'])==0):
+                continue
+            ex = self.preprocess(ex, self.is_test)
+            if(ex is None):
+                continue
+            minibatch.append(ex)
+            size_so_far = simple_batch_size_fn(ex, len(minibatch))
+            if size_so_far == batch_size:
+                yield minibatch
+                minibatch, size_so_far = [], 0
+            elif size_so_far > batch_size:
+                yield minibatch[:-1]
+                minibatch, size_so_far = minibatch[-1:], simple_batch_size_fn(ex, 1)
+        if minibatch:
+            yield minibatch
+
+    def create_batches(self):
+        """ Create batches """
+        data = self.data()
+        for buffer in self.batch_buffer(data, self.batch_size * 50):
+
+            p_batch = sorted(buffer, key=lambda x: len(x[3]))
+            p_batch = batch(p_batch, self.batch_size)
+
+            p_batch = list(p_batch)
+            if (self.shuffle):
+                random.shuffle(p_batch)
+            for b in p_batch:
+                yield b
+
+    def __iter__(self):
+        while True:
+            self.batches = self.create_batches()
+            for idx, minibatch in enumerate(self.batches):
+                # fast-forward if loaded from state
+                if self._iterations_this_epoch > idx:
+                    continue
+                self.iterations += 1
+                self._iterations_this_epoch += 1
+                batch = Batch(minibatch, self.device, self.is_test)
+
+                yield batch
+            return
+
