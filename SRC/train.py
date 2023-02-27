@@ -209,10 +209,13 @@ def test(args, device_id, pt, step):
 
     config = BertConfig.from_pretrained('klue/bert-base')
     model = Summarizer(args, device, load_pretrained_bert=False, bert_config = config)
+    print("model test : ", model)
+    print("checkpoint test : ", checkpoint)
     model.load_cp(checkpoint)
+    print(model.load_cp(checkpoint))
     model.eval()
 
-    test_iter =data_loader.Dataloader(args, load_dataset(args, 'test', shuffle=False),
+    test_iter = data_loader.Dataloader(args, load_dataset(args, 'test', shuffle=False),
                                   args.batch_size, device,
                                   shuffle=False, is_test=True)
     trainer = build_trainer(args, device_id, model, None)
@@ -221,7 +224,7 @@ def test(args, device_id, pt, step):
 
 def baseline(args, cal_lead=False, cal_oracle=False):
 
-    test_iter =data_loader.Dataloader(args, load_dataset(args, 'test', shuffle=False),
+    test_iter = data_loader.Dataloader(args, load_dataset(args, 'test', shuffle=False),
                                   args.batch_size, device,
                                   shuffle=False, is_test=True)
 
@@ -238,11 +241,11 @@ def _lazy_dataset_loader(pt_file):
         
 
 def inference(args, device_id, step):
-    print('args :', args)
+    # print('args :', args)
     with open(args.input_text, 'r') as f:
         text = "\n".join(f.readlines())
         
-    print(text)
+    # print(text)
 
     input_list = txt2input(text)
     
@@ -250,41 +253,47 @@ def inference(args, device_id, step):
     device_id = 0 if device == "cuda" else -1
 
     cp = args.test_from
+
     try:
         step = int(cp.split('.')[-2].split('_')[-1])
     except:
         step = 0
 
     device = "cpu" if args.visible_gpus == '-1' else "cuda"
-
+    
     test_from = args.test_from
+
     logger.info('Loading checkpoint from %s' % test_from)
     checkpoint = torch.load(test_from, map_location=lambda storage, loc: storage)
     opt = vars(checkpoint['opt'])
-
+    #print(opt)
     for k in opt.keys():
         if (k in model_flags):
             setattr(args, k, opt[k])
+    print(args)
 
     config = BertConfig.from_pretrained('klue/bert-base')
     model = Summarizer(args, device, load_pretrained_bert=False, bert_config = config)
-    model.load_cp(checkpoint)
-    model.eval()
+    # print(checkpoint)
+    # print(model)
+    # print(model.load_cp())
+    # model.load_cp(checkpoint)
+    # model.eval()
 
-    test_iter = data_loader.Dataloader(args, _lazy_dataset_loader(input_list),
-                                args.batch_size, device,
-                                shuffle=False, is_test=True)
-    trainer = build_trainer(args, device_id, model, None)
-    result = trainer.summ(test_iter,step)
+    # test_iter = data_loader.Dataloader(args, _lazy_dataset_loader(input_list),
+    #                             args.batch_size, device,
+    #                             shuffle=False, is_test=True)
+    # trainer = build_trainer(args, device_id, model, None)
+    # result = trainer.summ(test_iter,step)
     
-    final = [list(filter(None, text.split('\n')))[i] for i in result[0][:3]]
-    print(final)
-    return final
+    # final = [list(filter(None, text.split('\n')))[i] for i in result[0][:3]]
+    # print(final)
+    # return final
 
 def new_inference(input_data, test_from, encoder): # 이 부분을 with로 파일을 받는게 아니라 리스트를 받아서 돌리면 되지 않을까? infer2만들어서
     temp_dir = test_from
     encoder = encoder
-    ff_size = 512
+    ff_size = 2048
     heads = 4
     dropout = 0.1 
     inter_layers = 2
@@ -296,43 +305,56 @@ def new_inference(input_data, test_from, encoder): # 이 부분을 with로 파�
     batch_size = 1000
 
     use_interval = True
-    print("여기오나?")
-    print(input_data)
-    print("여기오나?")
+
+    visible_gpus = -1
+    accum_count = 1
+    world_size = 0
+    gpu_ranks = [-1]
+    model_path = '../models/'
+    report_every = 1
+
+    # print(input_data)
+
     input_list = new_txt2input(input_data)
-    print("여기 안오나")
-    print("new_test : ", input_list)
     device = "cpu" 
     device_id = 0 if device == "cuda" else -1
 
     cp = test_from
+
     try:
         step = int(cp.split('.')[-2].split('_')[-1])
     except:
         step = 0
 
     device = "cpu" 
-
-    test_from = test_from
-    logger.info('Loading checkpoint from %s' % test_from)
+   
+    #logger.info('Loading checkpoint from %s' % test_from)
+    print(lambda storage, loc: storage)
     checkpoint = torch.load(test_from, map_location=lambda storage, loc: storage)
-    print("new_test10 : ",checkpoint)
     opt = vars(checkpoint['opt'])
-    print("new_test11 : ", opt)
-    # for k in opt.keys():
-    #     if (k in model_flags):
-    #         setattr(args, k, opt[k])
-
+    
     config = BertConfig.from_pretrained('klue/bert-base')
+
+
+
     model = new_Summarizer(temp_dir, encoder, ff_size, heads, dropout, inter_layers,
-                 rnn_size, hidden_size, param_init, param_init_glorot, device, load_pretrained_bert=False, bert_config = config)
+                 rnn_size, hidden_size, param_init, param_init_glorot, 
+                 device, load_pretrained_bert=False, bert_config = config)
+    
+  
+    # print(model)
+    # 오류의 원인은 결국 args값을 넘기지 않았기 때문이다. 
+    # print(checkpoint)
+    #print(model.load_cp(checkpoint))
     model.load_cp(checkpoint)
     model.eval()
 
     test_iter = data_loader.new_Dataloader(use_interval, _lazy_dataset_loader(input_list),
                                 batch_size, device,
                                 shuffle=False, is_test=True)
-    trainer = new_build_trainer(args, device_id, model, None)
+    trainer = new_build_trainer(visible_gpus, accum_count, 
+                                world_size, gpu_ranks, temp_dir,
+                                model_path, report_every, device_id, model, None)
     result = trainer.new_summ(test_iter,step)
     
     final = [list(filter(None, input_data))[i] for i in result[0][:3]]
