@@ -248,7 +248,7 @@ class new_Dataloader(object):
         self.shuffle = shuffle
         self.is_test = is_test
         self.cur_iter = self._next_dataset_iterator(datasets)
-
+        
         assert self.cur_iter is not None
 
     def __iter__(self):
@@ -272,7 +272,7 @@ class new_Dataloader(object):
         except StopIteration:
             return None
 
-        return DataIterator(use_interval = self.use_interval,
+        return new_DataIterator(use_interval = self.use_interval,
             dataset=self.cur_dataset,  batch_size=self.batch_size,
             device=self.device, shuffle=self.shuffle, is_test=self.is_test)
 
