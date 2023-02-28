@@ -270,7 +270,7 @@ def inference(args, device_id, step):
     for k in opt.keys():
         if (k in model_flags):
             setattr(args, k, opt[k])
-    print(args)
+    print(device_id)
 
     config = BertConfig.from_pretrained('klue/bert-base')
     model = Summarizer(args, device, load_pretrained_bert=False, bert_config = config)
@@ -306,17 +306,19 @@ def new_inference(input_data, test_from, encoder): # 이 부분을 with로 파�
 
     use_interval = True
 
-    visible_gpus = -1
+    visible_gpus = '-1'
     accum_count = 1
     world_size = 0
-    gpu_ranks = [-1]
+    gpu_ranks = '-1'
     model_path = '../models/'
     report_every = 1
 
     # print(input_data)
 
     input_list = new_txt2input(input_data)
-    device = "cpu" 
+   
+    device = "cpu" if visible_gpus == '-1' else "cuda"
+    print("test",device)
     device_id = 0 if device == "cuda" else -1
 
     cp = test_from
@@ -325,9 +327,8 @@ def new_inference(input_data, test_from, encoder): # 이 부분을 with로 파�
         step = int(cp.split('.')[-2].split('_')[-1])
     except:
         step = 0
-
-    device = "cpu" 
-   
+    device = "cpu" if visible_gpus == '-1' else "cuda"
+    print(device_id)
     #logger.info('Loading checkpoint from %s' % test_from)
     print(lambda storage, loc: storage)
     checkpoint = torch.load(test_from, map_location=lambda storage, loc: storage)
@@ -348,7 +349,7 @@ def new_inference(input_data, test_from, encoder): # 이 부분을 with로 파�
     #print(model.load_cp(checkpoint))
     model.load_cp(checkpoint)
     model.eval()
-
+    
     test_iter = data_loader.new_Dataloader(use_interval, _lazy_dataset_loader(input_list),
                                 batch_size, device,
                                 shuffle=False, is_test=True)
