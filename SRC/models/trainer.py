@@ -33,12 +33,11 @@ def build_trainer(args, device_id, model,
     """
     device = "cpu" if args.visible_gpus == '-1' else "cuda"
 
-
     grad_accum_count = args.accum_count
     n_gpu = args.world_size
-
     if device_id >= 0:
         gpu_rank = int(args.gpu_ranks[device_id])
+      
     else:
         gpu_rank = 0
         n_gpu = 0
@@ -483,8 +482,18 @@ class Trainer(object):
 
 # 평가용
 
-def new_build_trainer(args, device_id, model,
+def new_build_trainer(visible_gpus, accum_count, 
+                    world_size, gpu_ranks,
+                    model_path, report_every,
+                    device_id, model, temp_dir,
                   optim):
+    
+    save_checkpoint_steps = 5
+    result_path = '../results/cnndm'
+    recall_eval = False
+    block_trigram = True
+    report_rouge = True
+    temp_dir = temp_dir
     """
     Simplify `Trainer` creation based on user `opt`s*
     Args:
@@ -497,27 +506,30 @@ def new_build_trainer(args, device_id, model,
         model_saver(:obj:`onmt.models.ModelSaverBase`): the utility object
             used to save the model
     """
-    device = "cpu" if args.visible_gpus == '-1' else "cuda"
-
-
-    grad_accum_count = args.accum_count
-    n_gpu = args.world_size
+    device = "cpu" if visible_gpus == '-1' else "cuda"
+    print("여기까지 00안오나?")
+    print('gpu_ranks', gpu_ranks)
+    print('device_id', device_id)
+    print("흠....", int(gpu_ranks[device_id]))
+    grad_accum_count = accum_count
+    n_gpu = world_size
 
     if device_id >= 0:
-        gpu_rank = int(args.gpu_ranks[device_id])
+        gpu_rank = int(gpu_ranks[device_id])
     else:
         gpu_rank = 0
         n_gpu = 0
 
     print('gpu_rank %d' % gpu_rank)
 
-    tensorboard_log_dir = args.model_path
+    tensorboard_log_dir = model_path
 
     writer = SummaryWriter(tensorboard_log_dir, comment="Unmt")
 
-    report_manager = ReportMgr(args.report_every, start_time=-1, tensorboard_writer=writer)
-
-    trainer = Trainer(args, model, optim, grad_accum_count, n_gpu, gpu_rank, report_manager)
+    report_manager = ReportMgr(report_every, start_time=-1, tensorboard_writer=writer)
+    print("어디까지 될까요?")
+    trainer = new_Trainer(save_checkpoint_steps, result_path, recall_eval, block_trigram, report_rouge, temp_dir,
+                           model, optim, grad_accum_count, n_gpu, gpu_rank, report_manager)
 
     # print(tr)
     if (model):
@@ -527,7 +539,7 @@ def new_build_trainer(args, device_id, model,
     return trainer
 
 
-class Trainer(object):
+class new_Trainer(object):
     """
     Class that controls the training process.
 
@@ -552,17 +564,18 @@ class Trainer(object):
                 Thus nothing will be saved if this parameter is None
     """
 
-    def __init__(self,  args, model,  optim,
-                  grad_accum_count=1, n_gpu=1, gpu_rank=1,
-                  report_manager=None):
+    def __init__(self,  save_checkpoint_steps, result_path, recall_eval, block_trigram, report_rouge, temp_dir,
+                model, optim, grad_accum_count, n_gpu, gpu_rank, report_manager, 
+                ):
         # Basic attributes.
-        self.args = args
-        self.save_checkpoint_steps = args.save_checkpoint_steps
+        # save_checkpoint_steps, result_path, recall_eval, block_trigram, report_rouge, temp_dir
+        self.save_checkpoint_steps = save_checkpoint_steps
         self.model = model
         self.optim = optim
         self.grad_accum_count = grad_accum_count
         self.n_gpu = n_gpu
         self.gpu_rank = gpu_rank
+        self.temp_dir = temp_dir
         self.report_manager = report_manager
 
         self.loss = torch.nn.BCELoss(reduction='none')
