@@ -483,10 +483,9 @@ class Trainer(object):
 # 평가용
 
 def new_build_trainer(visible_gpus, accum_count, 
-                    world_size, gpu_ranks,
-                    model_path, report_every,
-                    device_id, model, temp_dir,
-                  optim):
+                    world_size, gpu_ranks, temp_dir,
+                    model_path, report_every, device_id, model,
+                    optim):
     
     save_checkpoint_steps = 5
     result_path = '../results/cnndm'
@@ -507,10 +506,7 @@ def new_build_trainer(visible_gpus, accum_count,
             used to save the model
     """
     device = "cpu" if visible_gpus == '-1' else "cuda"
-    print("여기까지 00안오나?")
-    print('gpu_ranks', gpu_ranks)
-    print('device_id', device_id)
-    print("흠....", int(gpu_ranks[device_id]))
+
     grad_accum_count = accum_count
     n_gpu = world_size
 
@@ -525,9 +521,7 @@ def new_build_trainer(visible_gpus, accum_count,
     tensorboard_log_dir = model_path
 
     writer = SummaryWriter(tensorboard_log_dir, comment="Unmt")
-
     report_manager = ReportMgr(report_every, start_time=-1, tensorboard_writer=writer)
-    print("어디까지 될까요?")
     trainer = new_Trainer(save_checkpoint_steps, result_path, recall_eval, block_trigram, report_rouge, temp_dir,
                            model, optim, grad_accum_count, n_gpu, gpu_rank, report_manager)
 
