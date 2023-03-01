@@ -98,7 +98,6 @@ class Summarizer(nn.Module):
         return sent_scores, mask_cls
 
 class new_Summarizer(nn.Module):
-    print("model2_test 여기까지 오나?")
     # temp_dir, encoder, ff_size, heads, dropout, inter_layers, rnn_size, hidden_size,param_init, param_init_glorot
     def __init__(self, temp_dir, encoder, ff_size, heads, dropout, inter_layers,
                  rnn_size, hidden_size, param_init, param_init_glorot,
