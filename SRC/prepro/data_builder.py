@@ -13,7 +13,7 @@ import torch
 from multiprocess import Pool
 from transformers import BertTokenizer
 import sys
-sys.path.append('/content/drive/MyDrive/인공지능/추출요약/SRC')
+sys.path.append('C:\pythonStudy\추출요약\SRC')
 # from others.logging import logger
 from others.utils import clean
 from prepro.utils import _get_word_ngrams
@@ -375,6 +375,20 @@ def txt2input(text):
     data = list(filter(None, text.split('\n')))
     bertdata = BertDataInference()
     txt_data = bertdata.preprocess(data)
+    data_dict = {"src":txt_data[0],
+               "labels":[0,1,2],
+               "segs":txt_data[2],
+               "clss":txt_data[3],
+               "src_txt":txt_data[4],
+               "tgt_txt":None}
+    input_data = []
+    input_data.append(data_dict)
+    return input_data
+
+def new_txt2input(text):
+    #data = list(filter(None, text.split(',')))
+    bertdata = BertDataInference()
+    txt_data = bertdata.preprocess(text)
     data_dict = {"src":txt_data[0],
                "labels":[0,1,2],
                "segs":txt_data[2],
