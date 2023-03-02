@@ -13,7 +13,7 @@ import torch
 from multiprocess import Pool
 from transformers import BertTokenizer
 import sys
-sys.path.append('C:\pythonStudy\추출요약\SRC')
+sys.path.append('/content/drive/MyDrive/인공지능/추출요약/SRC')
 # from others.logging import logger
 from others.utils import clean
 from prepro.utils import _get_word_ngrams
