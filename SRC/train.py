@@ -16,7 +16,7 @@ from transformers import BertConfig
 
 import distributed
 import sys 
-sys.path.append('SRC')
+sys.path.append('/content/drive/MyDrive/인공지능/추출요약/SRC')
 from models import data_loader, model_builder
 from models.data_loader import load_dataset
 from models.model_builder import Summarizer, new_Summarizer
@@ -288,7 +288,7 @@ def inference(args, device_id, step):
     print(final)
     return final
 
-def new_inference(input_data, test_from, encoder): # 이 부분을 with로 파일을 받는게 아니라 리스트를 받아서 돌리면 되지 않을까? infer2만들어서
+def new_inference(input_data, test_from, encoder, visible_gpus, gpu_ranks, world_size): # 이 부분을 with로 파일을 받는게 아니라 리스트를 받아서 돌리면 되지 않을까? infer2만들어서
     temp_dir = test_from
     encoder = encoder
     ff_size = 2048
@@ -304,14 +304,14 @@ def new_inference(input_data, test_from, encoder): # 이 부분을 with로 파�
 
     use_interval = True
 
-    visible_gpus = '-1'
+    visible_gpus = visible_gpus
     accum_count = 1
-    world_size = 0
-    gpu_ranks = '-1'
+    world_size = world_size
+    gpu_ranks = gpu_ranks
     model_path = '../models/'
     report_every = 1
 
-    print(input_data)
+    # print(input_data)
 
     input_list = new_txt2input(input_data)
    
@@ -351,7 +351,7 @@ def new_inference(input_data, test_from, encoder): # 이 부분을 with로 파�
     result = trainer.summ(test_iter,step)
     
     final = [list(filter(None, input_data))[i] for i in result[0][:3]]
-    print(final)
+    # print(final)
     return final
 
 def train(args, device_id):
