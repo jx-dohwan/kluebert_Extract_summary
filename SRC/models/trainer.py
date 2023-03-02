@@ -516,7 +516,7 @@ def new_build_trainer(visible_gpus, accum_count,
         gpu_rank = 0
         n_gpu = 0
 
-    print('gpu_rank %d' % gpu_rank)
+    #print('gpu_rank %d' % gpu_rank)
 
     tensorboard_log_dir = model_path
 
