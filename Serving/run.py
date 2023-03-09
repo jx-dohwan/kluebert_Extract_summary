@@ -4,6 +4,8 @@ from preprocessor import preprocess_sentence, preprocess_result, remove_empty_pa
 #from time_check import do_something
 import math
 import time
+import sys
+sys.path.append("")
 
 
 app = Flask(__name__)
@@ -17,7 +19,11 @@ def home():
     #do_something()
     text_input = False
     text_input = str(request.form.get('size'))
+    # 리스트 형식X 전체 데이터를 넣어서 '\n'.join으로 받기
+    # 추출요약 모델 SRC 파일로 결과 출력까지 거의 그대로 구현
+    text_input = "\n".join(text_input)
     if text_input: 
+
         result = preprocess_sentence(text_input)
         result = remove_empty_pattern(result)
         result = preprocess_result(result) #내 생각과는 다르게 사용을 하지 않아도 [이름][시간]다 제거되었음, 
