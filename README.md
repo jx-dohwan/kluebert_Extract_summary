@@ -70,6 +70,7 @@ os.makedirs(logdirlocation, exist_ok=True)
   -input_text raw_data/valid/valid_0.txt
 ```
 
+## 3. [Rouge](https://github.com/jx-dohwan/kluebert_Extract_summary/blob/main/rouge_evaluation.ipynb)
 ---
 
 
