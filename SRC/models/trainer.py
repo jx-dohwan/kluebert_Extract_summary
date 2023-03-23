@@ -893,7 +893,7 @@ class new_Trainer(object):
             'opt': self.args,
             'optim': self.optim,
         }
-        checkpoint_path = os.path.join(self.args.model_path, 'model_step_%d.bin' % step)
+        checkpoint_path = os.path.join(self.args.model_path, 'model_step_%d.pt' % step)
         logger.info("Saving checkpoint %s" % checkpoint_path)
         # checkpoint_path = '%s_step_%d.pt' % (FLAGS.model_path, step)
         if (not os.path.exists(checkpoint_path)):
