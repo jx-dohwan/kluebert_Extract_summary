@@ -5,6 +5,12 @@
 #### 2️⃣ 설명 : [Fine-tune BERT for Extractive Summarization](https://arxiv.org/pdf/1903.10318v2.pdf)을 기반으로 추출 요약 모델 구현<br> 
 #### 3️⃣ 모델 : Hugging Face [klue/bert-base](https://huggingface.co/klue/bert-base) 모델 사용하여 진행<br><br>
 
+### 해당 프로젝트에 관한 자세한 사항은 블로그에 정리해 놓았다.
+- [KlueBERT를 활용한 뉴스 세 줄 요약 서비스_1(ft.논문 소개)](https://velog.io/@jx7789/KlueBERT%EB%A5%BC-%ED%99%9C%EC%9A%A9%ED%95%9C-%EB%89%B4%EC%8A%A4-%EC%84%B8-%EC%A4%84-%EC%9A%94%EC%95%BD-%EC%84%9C%EB%B9%84%EC%8A%A41ft.%EB%85%BC%EB%AC%B8%EC%86%8C%EA%B0%9C)
+- [KlueBERT를 활용한 뉴스 세 줄 요약 서비스_2(ft.데이터)](https://velog.io/@jx7789/KlueBERT%EB%A5%BC-%ED%99%9C%EC%9A%A9%ED%95%9C-%EB%89%B4%EC%8A%A4-%EC%84%B8-%EC%A4%84-%EC%9A%94%EC%95%BD-%EC%84%9C%EB%B9%84%EC%8A%A42ft.%EB%8D%B0%EC%9D%B4%ED%84%B0)
+- [KlueBERT를 활용한 뉴스 세 줄 요약 서비스_3(ft.모델)](https://velog.io/@jx7789/KlueBERT%EB%A5%BC-%ED%99%9C%EC%9A%A9%ED%95%9C-%EB%89%B4%EC%8A%A4-%EC%84%B8-%EC%A4%84-%EC%9A%94%EC%95%BD-%EC%84%9C%EB%B9%84%EC%8A%A43ft.%EB%AA%A8%EB%8D%B8)
+- [KlueBERT를 활용한 뉴스 세 줄 요약 서비스_4(ft.평가)](https://velog.io/@jx7789/KlueBERT%EB%A5%BC-%ED%99%9C%EC%9A%A9%ED%95%9C-%EB%89%B4%EC%8A%A4-%EC%84%B8-%EC%A4%84-%EC%9A%94%EC%95%BD-%EC%84%9C%EB%B9%84%EC%8A%A44ft.%ED%8F%89%EA%B0%80)
+
 ## 논문 소개
 - BERT를 기반으로 Simple Classifier, Inter-sentence Transformer, Recurrent Neural Network 세가지 종류의 summarization-specific layers를 추가하여 추출 요약 실험 진행
 <br>
