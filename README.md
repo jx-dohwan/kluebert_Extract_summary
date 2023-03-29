@@ -39,23 +39,24 @@ os.makedirs(logdirlocation, exist_ok=True)
   -encoder transformer \
   -dropout 0.1 \
   -bert_data_path data/bert_data/train/korean \
-  -model_path MODEL/KLUE/bert_transformer \
+  -model_path MODEL/KLUE/bert_transformer_result \
   -lr 2e-3 \
   -visible_gpus 0 \
   -gpu_ranks 0 \
   -world_size 1 \
   -report_every 1000\
-  -save_checkpoint_steps 100 \
+  -save_checkpoint_steps 10000 \
   -batch_size 1000 \
   -decay_method noam \
-  -train_steps 1000 \
+  -train_steps 50000 \
   -accum_count 2 \
-  -log_file LOG/KLUE/bert_transformer.txt \
+  -log_file LOG/KLUE/bert_transformer_result.txt \
   -use_interval true \
-  -warmup_steps 200 \
+  -warmup_steps 10000 \
   -ff_size 2048 \
   -inter_layers 2 \
   -heads 8
+     
 ```
 
 ## 2. Test
@@ -65,8 +66,8 @@ os.makedirs(logdirlocation, exist_ok=True)
   -visible_gpus -1 \
   -gpu_ranks -1 \
   -world_size 0 \
-  -log_file LOG/KLUE/bert_transformer.txt \
-  -test_from MODEL/KLUE/bert_transformer/model_step_1000.pt \
+  -log_file LOG/KLUE/bert_transformer_result.txt \
+  -test_from MODEL/KLUE/bert_transformer_result/model_step_50000.pt \
   -input_text raw_data/valid/valid_0.txt
 ```
 
