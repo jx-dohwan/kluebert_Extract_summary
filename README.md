@@ -1,7 +1,7 @@
 
 ## 💡프로젝트 소개
 
-#### 1️⃣ 주제 : 텍스트 추출 요약<br>
+#### 1️⃣ 주제 : KlueBERT를 활용한 뉴스 세 줄 요약 서비스<br>
 #### 2️⃣ 설명 : [Fine-tune BERT for Extractive Summarization](https://arxiv.org/pdf/1903.10318v2.pdf)을 기반으로 추출 요약 모델 구현<br> 
 #### 3️⃣ 모델 : Hugging Face [klue/bert-base](https://huggingface.co/klue/bert-base) 모델 사용하여 진행<br><br>
 
